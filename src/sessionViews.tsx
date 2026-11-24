@@ -25,6 +25,9 @@ let restoreInfo = '아직 안 함'
 let unloading = false
 let suspending = false // closing the bottom panel because we left Agent mode: keep the saved "open"
 let modeLabel = '?'
+// Set by installSideView: open the view when the active session gets a screen, close it after a button sends.
+let onShown = () => {}
+let onSent = () => {}
 // Agent mode = a visible session transcript that is not the Files-mode chat sidebar.
 export function isAgentMode() {
   for (const el of document.querySelectorAll<HTMLElement>('.agent-session-panel[data-session-id]')) {
@@ -99,6 +102,7 @@ async function sendAction(sessionId: string, p: MessageProcessor, action: Action
   try {
     await ipc().invoke('ai:createQueuedPrompt', sessionId, prompt, [], undefined)
     await ipc().invoke('ai:triggerQueueProcessing', sessionId, await sessionWorkspace(sessionId), 'a2ui-action')
+    onSent()
   } catch (e) {
     locks.delete(lockKey(sessionId, action.surfaceId)) // not sent: let the user retry
     listeners.forEach((l) => l())
@@ -123,7 +127,9 @@ async function tick() {
     queuedFor: entries.map((e) => e.sessionId),
   })
   listeners.forEach((l) => l())
+  let mine = false
   for (const entry of entries) {
+    if (entry.sessionId === activeSessionId) mine = true
     const p = processorFor(entry.sessionId)
     const errors = p.processMessagesWithErrors(entry.messages)
     for (const sid of surfaceIdsOf(entry.messages)) locks.delete(lockKey(entry.sessionId, sid))
@@ -131,6 +137,7 @@ async function tick() {
     await call('a2ui-panel.sack', { seq: entry.seq, errors })
     listeners.forEach((l) => l())
   }
+  if (mine) onShown()
 }
 
 function startViewer(c: Call) {
@@ -296,6 +303,13 @@ export function installSideView(context: ExtensionContext, Surfaces: SurfacesFn)
     else open(place)
   }
   window.addEventListener('nimbalyst:toggle-panel', onToggle, true)
+  onShown = () => {
+    if (!isAgentMode()) return
+    if (store.place === 'bottom') { if (!bottomOpen) toggleBottom() }
+    else if (!root) open(store.place)
+  }
+  onSent = () => { if (bottomOpen) toggleBottom(); else if (root) userClose() }
+  const stopPoll = startViewer(c) // keep polling while closed, so new screens can open the view
   // Show the saved view in Agent mode only. Restart restore is the first Agent-mode check.
   const saved = 'open=' + localStorage.getItem('a2ui-panel.open') + ', place=' + localStorage.getItem('a2ui-panel.place')
   restoreInfo = '저장값 ' + saved + ', 결과 화면 준비 기다리는 중'
@@ -330,7 +344,7 @@ export function installSideView(context: ExtensionContext, Surfaces: SurfacesFn)
     apply()
     mo.observe(document.getElementById('root')!, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] })
   }, 200)
-  return () => { clearInterval(ready); mo.disconnect(); window.removeEventListener('nimbalyst:toggle-panel', onToggle, true); close() }
+  return () => { stopPoll(); onShown = onSent = () => {}; clearInterval(ready); mo.disconnect(); window.removeEventListener('nimbalyst:toggle-panel', onToggle, true); close() }
 }
 
 // The narrow left column that holds the gutter buttons.
