@@ -1,0 +1,63 @@
+{
+  "id": "com.syacucloud.a2ui-panel",
+  "name": "A2UI Panel",
+  "version": "0.1.0",
+  "description": "에이전트가 A2UI 로 보낸 화면을 왼쪽·오른쪽·아래 칸이나 .a2ui.json 파일에 그리고, 버튼 동작을 대화로 돌려보내요.",
+  "author": "SYacuCLoud",
+  "main": "dist/index.js",
+  "styles": "dist/index.css",
+  "apiVersion": "1.0.0",
+  "defaultEnabled": true,
+  "permissions": {
+    "ai": true
+  },
+  "contributions": {
+    "panels": [
+      {
+        "id": "bottom",
+        "title": "A2UI (아래)",
+        "icon": "dashboard",
+        "placement": "bottom",
+        "tooltip": "지금 보고 있는 세션의 A2UI 화면"
+      },
+      {
+        "id": "right",
+        "title": "A2UI",
+        "icon": "dashboard",
+        "placement": "floating",
+        "tooltip": "지금 보고 있는 세션의 A2UI 화면 (왼쪽·오른쪽·아래 중 마지막 자리)"
+      }
+    ],
+    "backendModules": [
+      {
+        "id": "a2ui-runtime",
+        "entry": "dist/backend.js",
+        "runtime": "utility-process",
+        "permissions": [
+          "mcp-server-register"
+        ],
+        "enablement": {
+          "default": "disabled",
+          "promptOn": "firstUse",
+          "purpose": "에이전트 세션이 보낸 A2UI 화면을 A2UI 칸으로 전달해요."
+        }
+      }
+    ],
+    "customEditors": [
+      {
+        "displayName": "A2UI",
+        "filePatterns": [
+          "*.a2ui.json"
+        ],
+        "component": "A2uiFileEditor",
+        "supportsSourceMode": true
+      }
+    ],
+    "keybindings": [
+      {
+        "key": "ctrl+alt+shift+a",
+        "command": "com.syacucloud.a2ui-panel.right.toggle"
+      }
+    ]
+  }
+}

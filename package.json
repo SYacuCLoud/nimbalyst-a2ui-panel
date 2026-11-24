@@ -1,0 +1,24 @@
+{
+  "name": "com.syacucloud.a2ui-panel",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build && node -e \"require('fs').copyFileSync('src/backend.js','dist/backend.js')\"",
+    "check:types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@a2ui/markdown-it": "^0.2.4",
+    "@a2ui/react": "0.16.1",
+    "@a2ui/web_core": "0.16.1",
+    "react": "^18.2.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@nimbalyst/extension-sdk": "^0.7.1",
+    "@types/react": "^18.2.0",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.7.2",
+    "vite": "^7.1.12"
+  }
+}
